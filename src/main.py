@@ -22,16 +22,79 @@ class Survey(ft.Container):
                 ft.Column(
                     controls=[
                         ft.Container(
-                            bgcolor=ft.Colors.BLACK,
-                            content=ft.Text(
-                                value="""Hello, my name is tanver, i am from gazipur. I completed my graduation from Gopalgonj Science and Technology University.
-                                Now, after each full back-and-forth animation, the gradient will shift to a brand new set of random colors, making the effect even more visually interesting.""",
-                                color="white",
-                                size=12,
-                                font_family="Arial",
-                                no_wrap=False
+                            bgcolor="#fdf6e3",
+                            content=ft.Column(
+                                controls=[
+                                    ft.Text(
+                                        value="Welcome",
+                                        size=25,
+                                        font_family="Arial",
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.BLUE_GREY_900
+                                    ),
+                                    ft.Text(
+                                        value="Request for Your Opinion",
+                                        size=20,
+                                        color=ft.Colors.BLUE_GREY_500
+                                    ),
+                                    ft.Text(
+                                        value="We're conducting a brief survey to understand how people spend their money once their essential needs are met. Your insights are incredibly important as they help us understand evolving consumer priorities and lifestyle trends. This information can guide businesses in developing products and services that truly align with what people want beyond their basic needs.",
+                                        size=12,
+                                        color=ft.Colors.BLACK,
+                                        text_align=ft.TextAlign.JUSTIFY
+                                    ),
+                                    ft.Container(
+                                        bgcolor=ft.Colors.TRANSPARENT,
+                                        content=ft.Row(
+                                            controls=[
+                                                ft.Row(
+                                                    controls=[
+                                                        ft.Icon(
+                                                            name=ft.Icons.TIMER_ROUNDED,
+                                                            color=ft.Colors.BLACK
+                                                        ),
+                                                        ft.Text(
+                                                            value="5-7 Minutes",
+                                                            weight=ft.FontWeight.BOLD,
+                                                            size=12,
+                                                            color=ft.Colors.BLACK
+                                                        )
+                                                    ]
+                                                ),
+                                                ft.Row(
+                                                    controls=[
+                                                        ft.Icon(
+                                                            name=ft.Icons.ENHANCED_ENCRYPTION_ROUNDED,
+                                                            color=ft.Colors.BLACK
+                                                        ),
+                                                        ft.Text(
+                                                            value="Anonymous",
+                                                            weight=ft.FontWeight.BOLD,
+                                                            size=12,
+                                                            color=ft.Colors.BLACK
+                                                        )
+                                                    ]
+                                                )
+                                            ],
+                                            alignment=ft.MainAxisAlignment.SPACE_EVENLY
+                                        )
+                                    ),
+                                    ft.Divider(),
+                                    ft.ElevatedButton(
+                                        text="Start Survey",
+                                        bgcolor=ft.Colors.BLUE_GREY_200,
+                                        color=ft.Colors.BLACK,
+                                        style=ft.ButtonStyle(
+                                            shape=ft.RoundedRectangleBorder(
+                                                radius=5
+                                            )
+                                        )
+                                    )
+                                ],
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                spacing=5
                             ),
-                            padding=ft.padding.all(15)
+                            padding=ft.padding.all(10)
                         )
                     ],
                     col={"xs": 12, "sm": 6, "md": 4, "lg": 4},
@@ -87,7 +150,8 @@ def main(page: ft.Page):
 
     # Use the relative path for the font
     page.fonts = {
-        "title_font": "ZenDots-Regular.ttf"
+        "title_font": "ZenDots-Regular.ttf",
+        "fancy": "CherryBombOne-Regular.ttf"
     }
 
     page.on_resized = survey_container.on_view_change
