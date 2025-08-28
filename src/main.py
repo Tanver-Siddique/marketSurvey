@@ -1,74 +1,105 @@
 import flet as ft
-import asyncio
-import random
+from Title_animation import GradientAnimatedTextContainer
 
 
-def get_random_color():
-    """Generates a random hex color string."""
-    return f"#{random.randint(0, 255):02x}{random.randint(0, 255):02x}{random.randint(0, 255):02x}"
+class Survey(ft.Container):
+    def __init__(self, page: ft.Page):
+        super().__init__(
+            bgcolor=ft.Colors.BLACK,
+            expand=True,
+            padding=5,
+        )
+        self.page = page
+
+        self.title_text = GradientAnimatedTextContainer(
+            value="Desires After Duties",
+            font_family="title_font",
+            no_wrap=False
+        )
+
+        self.main_content_container = ft.ResponsiveRow(
+            controls=[
+                ft.Column(
+                    controls=[
+                        ft.Container(
+                            bgcolor=ft.Colors.BLACK,
+                            content=ft.Text(
+                                value="""Hello, my name is tanver, i am from gazipur. I completed my graduation from Gopalgonj Science and Technology University.
+                                Now, after each full back-and-forth animation, the gradient will shift to a brand new set of random colors, making the effect even more visually interesting.""",
+                                color="white",
+                                size=12,
+                                font_family="Arial",
+                                no_wrap=False
+                            ),
+                            padding=ft.padding.all(15)
+                        )
+                    ],
+                    col={"xs": 12, "sm": 6, "md": 4, "lg": 4},
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+        self.content = ft.Column(
+            expand=True,
+            controls=[
+                ft.ResponsiveRow(
+                    controls=[
+                        ft.Column(
+                            controls=[self.title_text],
+                            col={"xs": 12},
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        )
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+
+                ft.Column(
+                    controls=[self.main_content_container],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    expand=True,
+                )
+            ],
+        )
+
+    def on_view_change(self, e):
+        if self.page.width < 600:
+            self.title_text.text_control.size = 25
+        elif self.page.width < 900:
+            self.title_text.text_control.size = 40
+        else:
+            self.title_text.text_control.size = 50
+        self.page.update()
 
 
 def main(page: ft.Page):
-    page.title = "Animated Gradient Text"
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.bgcolor = ft.Colors.BLACK
+    page.title = "Survey"
+    page.spacing = 0
+    page.padding = 0
 
-    text_content = ft.Text(
-        "Flet Animation",
-        size=70,
-        weight=ft.FontWeight.BOLD,
-        font_family="Arial",
-        text_align=ft.TextAlign.CENTER,
-    )
+    survey_container = Survey(page)
 
-    animated_gradient_text = ft.ShaderMask(
-        content=text_content,
-        blend_mode=ft.BlendMode.SRC_IN,
-        shader=ft.LinearGradient(
-            # Initial colors and gradient setup
-            begin=ft.alignment.Alignment(-1.5, 0),
-            end=ft.alignment.Alignment(0.5, 0),
-            colors=[ft.Colors.CYAN_700, ft.Colors.ORANGE_300, ft.Colors.CYAN_700],
-            stops=[0.0, 0.5, 1.0]
-        )
-    )
+    # Use the relative path for the font
+    page.fonts = {
+        "title_font": "ZenDots-Regular.ttf"
+    }
 
-    page.add(animated_gradient_text)
+    page.on_resized = survey_container.on_view_change
 
-    async def animate_gradient():
-        begin_x = -1.5
-        end_x = 0.5
-        step = 0.02
-        moving_right = True
+    page.add(survey_container)
 
-        while True:
-            if moving_right:
-                begin_x += step
-                end_x += step
-                if begin_x >= 1.5:
-                    moving_right = False
-            else:  # Moving left
-                begin_x -= step
-                end_x -= step
-                if end_x <= -0.5:
-                    moving_right = True
+    page.run_task(survey_container.title_text.animate_gradient_task)
 
-                    # --- NEW: Generate and apply new random colors
-                    animated_gradient_text.shader.colors = [
-                        get_random_color(),
-                        get_random_color(),
-                        get_random_color()
-                    ]
-
-            animated_gradient_text.shader.begin = ft.alignment.Alignment(begin_x, 0)
-            animated_gradient_text.shader.end = ft.alignment.Alignment(end_x, 0)
-
-            page.update()
-            await asyncio.sleep(0.016)
-
-    page.run_task(animate_gradient)
+    survey_container.on_view_change(None)
+    page.update()
 
 
+# This is a crucial line for hosting. It tells Flet where to find the assets.
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.app(main, assets_dir="assets")
