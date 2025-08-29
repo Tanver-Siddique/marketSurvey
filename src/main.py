@@ -11,7 +11,7 @@ class Survey(ft.Container):
             padding=5,
         )
         self.page = page
-        self.language = "bn"  # default English
+        self.language = "en"  # default English
 
         # Text values for bilingual support - these are loaded once
         self.texts = {
@@ -28,6 +28,7 @@ class Survey(ft.Container):
                 "time": "5-7 Minutes",
                 "anonymous": "Anonymous",
                 "button": "Start Survey",
+                "title": "Desires After Duties"
             },
             "bn": {
                 "welcome": "স্বাগতম",
@@ -41,12 +42,13 @@ class Survey(ft.Container):
                 "time": "৫-৭ মিনিট",
                 "anonymous": "গোপনীয়",
                 "button": "জরিপ শুরু করুন",
+                "title": "দায়িত্বের পর আকাঙ্ক্ষা"
             }
         }
 
         # Title control (initialized once, its value will be updated)
         self.title_text = GradientAnimatedTextContainer(
-            value="Desires After Duties",
+            value=self.texts[self.language]["title"],
             font_family="title_font",
             no_wrap=False
         )
@@ -60,11 +62,27 @@ class Survey(ft.Container):
 
         # Language slider control (initialized once)
         self.language_slider = ft.SegmentedButton(
-            selected={"1"},
+            selected={"0"},
             allow_multiple_selection=False,
+            # --- START OF CHANGE FOR SEGMENTED BUTTON STYLE ---
             style=ft.ButtonStyle(
-                shape=ft.RoundedRectangleBorder(radius=5)
+                shape=ft.RoundedRectangleBorder(radius=5),
+                # Using string literals for states instead of ft.MaterialState
+                bgcolor={
+                    "selected": ft.Colors.BLUE_GREY_700, # Background when selected
+                    "default": ft.Colors.BLUE_GREY_200, # Background when not selected
+                },
+                color={
+                    "selected": ft.Colors.WHITE,       # Text color when selected
+                    "default": ft.Colors.BLACK,        # Text color when not selected
+                },
+                # Explicitly define the border to potentially override any default subtle lines
+                side={
+                    "default": ft.BorderSide(1, ft.Colors.BLUE_GREY_400),
+                    "selected": ft.BorderSide(1, ft.Colors.BLUE_GREY_900),
+                }
             ),
+            # --- END OF CHANGE FOR SEGMENTED BUTTON STYLE ---
             segments=[
                 ft.Segment(value="0", label=ft.Text("Eng")),
                 ft.Segment(value="1", label=ft.Text("বাংলা"))
@@ -234,11 +252,13 @@ class Survey(ft.Container):
             self.language = "bn"
             self.language_slider_title.value = "ভাষা নির্বাচন করুনঃ"
 
+        # Update title text
+        self.title_text.value = self.texts[self.language]["title"]
 
         # Re-create and load the main content for the new language
         self._load_main_content()
 
-        self.page.update() # Corrected: Removed await
+        self.page.update()
 
 
     def on_view_change(self, e):
@@ -262,12 +282,10 @@ async def load_survey(page: ft.Page):
     page.add(survey_container)
 
     # Start title animation (assuming animate_gradient_task is an async method)
-    # The 'None' argument in on_view_change is standard for initial calls,
-    # it simulates the event argument.
     page.run_task(survey_container.title_text.animate_gradient_task)
     survey_container.on_view_change(None)
 
-    page.update() # Corrected: Removed await
+    page.update()
 
 
 async def main(page: ft.Page):
@@ -286,13 +304,18 @@ async def main(page: ft.Page):
             ft.Text("Loading survey...", size=20, color=ft.Colors.WHITE),
         ],
         alignment=ft.MainAxisAlignment.CENTER,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        expand=True # Important: Make sure loading screen expands to fill page
     )
     page.controls.clear()
     page.add(loading_screen)
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.update() # Corrected: Removed await
+    page.update()
+
+    # Crucial: Add a small delay to ensure the loading screen is rendered
+    # before the survey content replaces it.
+    await asyncio.sleep(0.7) # Increased delay slightly
 
     # Load survey after delay in the background
     await load_survey(page)
