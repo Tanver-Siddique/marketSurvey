@@ -1,104 +1,67 @@
+# test.py
 import flet as ft
 import asyncio
-from Title_animation import GradientAnimatedTextContainer # Assuming this class exists and animate_gradient_task is async
+from Title_animation import GradientAnimatedTextContainer
+from data import start_text
 
 
 class Survey(ft.Container):
     def __init__(self, page: ft.Page):
-        super().__init__(
-            bgcolor=ft.Colors.BLACK,
-            expand=True,
-            padding=5,
-        )
+        super().__init__(bgcolor=ft.Colors.BLACK, expand=True, padding=5)
         self.page = page
-        self.language = "en"  # default English
+        self.language = "en"
+        self.current_page = "intro"
+        self.question_manager = None
+        self.is_completed = False
 
-        # Text values for bilingual support - these are loaded once
-        self.texts = {
-            "en": {
-                "welcome": "Welcome",
-                "request": "Request for Your Opinion",
-                "description": (
-                    "We're conducting a brief survey to understand how people spend their money "
-                    "once their essential needs are met. Your insights are incredibly important "
-                    "as they help us understand evolving consumer priorities and lifestyle trends. "
-                    "This information can guide businesses in developing products and services that "
-                    "truly align with what people want beyond their basic needs."
-                ),
-                "time": "5-7 Minutes",
-                "anonymous": "Anonymous",
-                "button": "Start Survey",
-                "title": "Desires After Duties"
-            },
-            "bn": {
-                "welcome": "স্বাগতম",
-                "request": "আপনার মতামত প্রার্থনা করছি",
-                "description": (
-                    "আমরা একটি সংক্ষিপ্ত জরিপ পরিচালনা করছি, যাতে বোঝা যায় মানুষ তাদের মৌলিক "
-                    "প্রয়োজন মেটানোর পর কীভাবে টাকা ব্যয় করে। আপনার মতামত আমাদের জন্য অত্যন্ত "
-                    "গুরুত্বপূর্ণ কারণ এটি পরিবর্তিত ভোক্তা অগ্রাধিকার ও জীবনযাপনের প্রবণতা বুঝতে সাহায্য করে। "
-                    "এই তথ্য ব্যবসাকে এমন পণ্য ও সেবা উন্নয়নে সহায়তা করবে যা মানুষের প্রকৃত চাহিদার সাথে সামঞ্জস্যপূর্ণ।"
-                ),
-                "time": "৫-৭ মিনিট",
-                "anonymous": "গোপনীয়",
-                "button": "জরিপ শুরু করুন",
-                "title": "দায়িত্বের পর আকাঙ্ক্ষা"
-            }
-        }
-
-        # Title control (initialized once, its value will be updated)
         self.title_text = GradientAnimatedTextContainer(
-            value=self.texts[self.language]["title"],
+            value="Desires After Duties",
             font_family="title_font",
             no_wrap=False
         )
 
-        # Language slider title control (initialized once, its value will be updated)
-        self.language_slider_title = ft.Text(
-            value="Select language:",
-            color=ft.Colors.WHITE,
-            size=20
-        )
-
-        # Language slider control (initialized once)
         self.language_slider = ft.SegmentedButton(
             selected={"0"},
             allow_multiple_selection=False,
-            # --- START OF CHANGE FOR SEGMENTED BUTTON STYLE ---
-            style=ft.ButtonStyle(
-                shape=ft.RoundedRectangleBorder(radius=5),
-                # Using string literals for states instead of ft.MaterialState
-                bgcolor={
-                    "selected": ft.Colors.BLUE_GREY_700, # Background when selected
-                    "default": ft.Colors.BLUE_GREY_200, # Background when not selected
-                },
-                color={
-                    "selected": ft.Colors.WHITE,       # Text color when selected
-                    "default": ft.Colors.BLACK,        # Text color when not selected
-                },
-                # Explicitly define the border to potentially override any default subtle lines
-                side={
-                    "default": ft.BorderSide(1, ft.Colors.BLUE_GREY_400),
-                    "selected": ft.BorderSide(1, ft.Colors.BLUE_GREY_900),
-                }
-            ),
-            # --- END OF CHANGE FOR SEGMENTED BUTTON STYLE ---
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=5)),
             segments=[
                 ft.Segment(value="0", label=ft.Text("Eng")),
-                ft.Segment(value="1", label=ft.Text("বাংলা"))
+                ft.Segment(value="1", label=ft.Text("বাংলা")),
             ],
-            on_change=self.change_language
+            on_change=self.change_language,
+            col={"xs": 6, "sm": 2, "md": 2, "lg": 2},
         )
 
-        # Placeholder for the main content container. It will be built later.
+        self.main_content_controls = ft.Column(
+            spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
         self.main_content_container_column = ft.Column(
             expand=True,
+            scroll=ft.ScrollMode.AUTO,
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[] # Initially empty
+            controls=[
+                ft.ResponsiveRow(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Column(
+                            col={"xs": 12, "sm": 6, "md": 4, "lg": 4},
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            controls=[
+                                ft.Container(
+                                    bgcolor="#fdf6e3",
+                                    padding=ft.padding.all(10),
+                                    content=self.main_content_controls,
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ],
         )
 
-        # Define the overall page layout with placeholders
         self.content = ft.Column(
             expand=True,
             controls=[
@@ -111,160 +74,128 @@ class Survey(ft.Container):
                             col={"xs": 12},
                             alignment=ft.MainAxisAlignment.CENTER,
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            controls=[self.title_text]
+                            controls=[self.title_text],
                         )
-                    ]
+                    ],
                 ),
                 ft.Divider(color=ft.Colors.TRANSPARENT),
-                ft.Column(
+                ft.ResponsiveRow(
+                    controls=[self.language_slider],
                     alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        ft.Row(
-                            controls=[
-                                self.language_slider_title,
-                                self.language_slider
-                            ],
-                            alignment=ft.MainAxisAlignment.CENTER
-                        )
-                    ],
+                    expand=False,
                 ),
-                self.main_content_container_column # This column will hold the dynamically loaded content
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                self.main_content_container_column,
             ],
         )
 
-        # Initially build and load the main content
-        self._load_main_content()
+        self._refresh_content()
 
-
-    def _create_main_content_controls(self):
-        """
-        Creates and returns a list of controls for the main survey introduction
-        based on the current language. These controls are created "on demand."
-        """
-        t = self.texts[self.language]
-        return ft.ResponsiveRow(
-            alignment=ft.MainAxisAlignment.CENTER,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Column(
-                    col={"xs": 12, "sm": 6, "md": 4, "lg": 4},
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        ft.Container(
-                            bgcolor="#fdf6e3",
-                            padding=ft.padding.all(10),
-                            content=ft.Column(
-                                spacing=8,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        value=t["welcome"],
-                                        size=25,
-                                        font_family="Arial",
-                                        weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.BLUE_GREY_900
-                                    ),
-                                    ft.Text(
-                                        value=t["request"],
-                                        size=20,
-                                        color=ft.Colors.BLUE_GREY_500
-                                    ),
-                                    ft.Text(
-                                        value=t["description"],
-                                        size=12,
-                                        color=ft.Colors.BLACK,
-                                        text_align=ft.TextAlign.JUSTIFY
-                                    ),
-                                    # Info row
-                                    ft.Row(
-                                        alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-                                        controls=[
-                                            ft.Row(
-                                                spacing=4,
-                                                controls=[
-                                                    ft.Icon(
-                                                        name=ft.Icons.TIMER_ROUNDED,
-                                                        color=ft.Colors.BLACK
-                                                    ),
-                                                    ft.Text(
-                                                        value=t["time"],
-                                                        weight=ft.FontWeight.BOLD,
-                                                        size=12,
-                                                        color=ft.Colors.BLACK
-                                                    )
-                                                ]
-                                            ),
-                                            ft.Row(
-                                                spacing=4,
-                                                controls=[
-                                                    ft.Icon(
-                                                        name=ft.Icons.ENHANCED_ENCRYPTION_ROUNDED,
-                                                        color=ft.Colors.BLACK
-                                                    ),
-                                                    ft.Text(
-                                                        value=t["anonymous"],
-                                                        weight=ft.FontWeight.BOLD,
-                                                        size=12,
-                                                        color=ft.Colors.BLACK
-                                                    )
-                                                ]
-                                            )
-                                        ]
-                                    ),
-                                    ft.Divider(),
-                                    ft.ElevatedButton(
-                                        text=t["button"],
-                                        bgcolor=ft.Colors.BLUE_GREY_200,
-                                        color=ft.Colors.BLACK,
-                                        style=ft.ButtonStyle(
-                                            shape=ft.RoundedRectangleBorder(radius=5)
-                                        )
-                                    )
-                                ],
+    def _create_intro_controls(self):
+        """Intro page content based on current language"""
+        t = start_text[self.language]
+        return [
+            ft.Text(
+                value=t["welcome"],
+                size=25,
+                font_family="Arial",
+                weight=ft.FontWeight.BOLD,
+                color=ft.Colors.BLUE_GREY_900,
+            ),
+            ft.Text(value=t["request"], size=20, color=ft.Colors.BLUE_GREY_500),
+            ft.Text(
+                value=t["description"],
+                size=12,
+                color=ft.Colors.BLACK,
+                text_align=ft.TextAlign.JUSTIFY,
+            ),
+            ft.Row(
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                controls=[
+                    ft.Row(
+                        spacing=4,
+                        controls=[
+                            ft.Icon(name=ft.Icons.TIMER_ROUNDED, color=ft.Colors.BLACK),
+                            ft.Text(
+                                value=t["time"],
+                                weight=ft.FontWeight.BOLD,
+                                size=12,
+                                color=ft.Colors.BLACK,
                             ),
-                        )
-                    ],
-                )
-            ],
-        )
+                        ],
+                    ),
+                    ft.Row(
+                        spacing=4,
+                        controls=[
+                            ft.Icon(
+                                name=ft.Icons.ENHANCED_ENCRYPTION_ROUNDED,
+                                color=ft.Colors.BLACK,
+                            ),
+                            ft.Text(
+                                value=t["anonymous"],
+                                weight=ft.FontWeight.BOLD,
+                                size=12,
+                                color=ft.Colors.BLACK,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ft.Divider(),
+            ft.ElevatedButton(
+                text=t["button"],
+                bgcolor=ft.Colors.BLUE_GREY_200,
+                color=ft.Colors.BLACK,
+                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=5)),
+                on_click=self.clicked_start_survey,
+            ),
+        ]
 
-    def _load_main_content(self):
-        """
-        Loads (creates) the main content and places it into the main_content_container_column.
-        This method replaces the entire content if it already exists.
-        """
-        # Clear existing content if any
-        self.main_content_container_column.controls.clear()
-        # Add the newly created content
-        self.main_content_container_column.controls.append(self._create_main_content_controls())
+    def _create_questionnaire_controls(self):
+        """Survey questions page based on current language"""
+        from survey import general_info_questions
 
+        if self.question_manager is None:
+            self.question_manager = general_info_questions(self.page, self.language,
+                                                           on_complete=self.on_survey_complete)
+            return [self.question_manager.main_container]
+        else:
+            self.question_manager.update_language(self.language)
+            return [self.question_manager.main_container]
 
-    async def change_language(self, e):
-        """Handles slider toggle between EN ("0") and BN ("1")"""
-        selected_value = list(e.control.selected)[0]
+    def _refresh_content(self):
+        """Rebuilds UI depending on current_page and language"""
+        self.main_content_controls.controls.clear()
 
-        if selected_value == "0":
-            self.language = "en"
-            self.language_slider_title.value = "Select language:"
-        else:  # selected_value == "1"
-            self.language = "bn"
-            self.language_slider_title.value = "ভাষা নির্বাচন করুনঃ"
-
-        # Update title text
-        self.title_text.value = self.texts[self.language]["title"]
-
-        # Re-create and load the main content for the new language
-        self._load_main_content()
+        if self.current_page == "intro":
+            self.main_content_controls.controls.extend(self._create_intro_controls())
+        elif self.current_page == "questionnaire":
+            self.main_content_controls.controls.extend(self._create_questionnaire_controls())
 
         self.page.update()
 
+    def on_survey_complete(self):
+        """Set a flag when the survey is fully completed"""
+        self.is_completed = True
+
+    def change_language(self, e):
+        """Handles language toggle globally"""
+        selected_value = list(e.control.selected)[0]
+        if selected_value == "0":
+            self.language = "en"
+        else:
+            self.language = "bn"
+
+        if self.is_completed:
+            # If the survey is completed, just update the end message
+            self.question_manager.end_message_control.value = "Thank you for completing the survey!" if self.language == "en" else "জরিপটি সম্পূর্ণ করার জন্য আপনাকে ধন্যবাদ!"
+            self.page.update()
+        else:
+            # If not completed, refresh the whole content
+            self._refresh_content()
 
     def on_view_change(self, e):
-        # The title_text itself is a GradientAnimatedTextContainer, which likely
-        # has a text_control property that holds the ft.Text object.
-        # This part assumes your GradientAnimatedTextContainer correctly exposes it.
+        """Responsive title size adjustment"""
         if self.page.width < 600:
             self.title_text.text_control.size = 25
         elif self.page.width < 900:
@@ -273,15 +204,22 @@ class Survey(ft.Container):
             self.title_text.text_control.size = 50
         self.page.update()
 
+    def clicked_start_survey(self, e):
+        """Switch to questionnaire"""
+        self.current_page = "questionnaire"
+        self._refresh_content()
 
-# ---------LOADING LOGIC HERE ----------
+
+# --------- LOADING LOGIC ----------
 async def load_survey(page: ft.Page):
+    page.update()
+    await asyncio.sleep(0.1)
+
     page.controls.clear()
     survey_container = Survey(page)
     page.on_resized = survey_container.on_view_change
     page.add(survey_container)
 
-    # Start title animation (assuming animate_gradient_task is an async method)
     page.run_task(survey_container.title_text.animate_gradient_task)
     survey_container.on_view_change(None)
 
@@ -294,10 +232,9 @@ async def main(page: ft.Page):
     page.padding = 0
     page.fonts = {
         "title_font": "ZenDots-Regular.ttf",
-        "fancy": "CherryBombOne-Regular.ttf"
+        "fancy": "CherryBombOne-Regular.ttf",
     }
 
-    # Show loading screen immediately
     loading_screen = ft.Column(
         [
             ft.ProgressRing(),
@@ -305,22 +242,17 @@ async def main(page: ft.Page):
         ],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        expand=True # Important: Make sure loading screen expands to fill page
+        expand=True,
     )
+
     page.controls.clear()
     page.add(loading_screen)
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.update()
 
-    # Crucial: Add a small delay to ensure the loading screen is rendered
-    # before the survey content replaces it.
-    await asyncio.sleep(0.7) # Increased delay slightly
-
-    # Load survey after delay in the background
     await load_survey(page)
 
 
 if __name__ == "__main__":
     ft.app(target=main, assets_dir="assets")
-
